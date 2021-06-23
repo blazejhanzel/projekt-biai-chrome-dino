@@ -163,8 +163,9 @@ def eval_genomes(genomes, config):
         # Drawing
         screen.fill(color_bg)
         pygame.draw.line(screen, color_main, [0, ground - 10], [width, ground - 10], 1)
-        pygame.draw.rect(screen, color_main,
-                         pygame.Rect(player.x, player.y - player.height + 5, player.width, player.height))
+        for player in players:
+            pygame.draw.rect(screen, color_main,
+                             pygame.Rect(player.x, player.y - player.height + 5, player.width, player.height))
         for obstacle in obstacles:
             pygame.draw.rect(screen, color_main,
                              pygame.Rect(obstacle.x, ground - obstacle.height, obstacle.width, obstacle.height))
