@@ -17,16 +17,42 @@ color_main = (0, 0, 0)
 color_bg = (255, 255, 255)
 ground = 400
 
-RUNNING = pygame.image.load(os.path.join("Assets/Dino", "DinoJump.png"))
+# Sprites and images
+dinoImg = pygame.image.load("Assets/Dino/DinoJump.png")
+cactusImg = [pygame.image.load("Assets/Cactus/SmallCactus1.png"), pygame.image.load("Assets/Cactus/SmallCactus2.png"), pygame.image.load("Assets/Cactus/SmallCactus3.png")]
+birdImg = pygame.image.load("Assets/Bird.png")
+
+
+class Bird:
+    width = 40
+    height = 20
+    x = 1080
+    y = ground - height - randrange(50, 100)
+    img = birdImg
+
+    def __init__(self, x=1080):
+        self.x = x
+        self.width = self.img.get_rect().w
+        self.height = self.img.get_rect().h
+        self.y = ground - self.height - randrange(50, 100)
+
+    def update(self, delta):
+        self.x -= 400 * delta
 
 
 class Obstacle:
     width = 20
     height = 40
     x = 720
+    y = ground - height
+    img = cactusImg[randrange(0,2)]
 
-    def __init__(self, x=720):
+    def __init__(self, x=1400):
         self.x = x
+        self.img = cactusImg[randrange(0,2)]
+        self.width = self.img.get_rect().w
+        self.height = self.img.get_rect().h
+        self.y = ground - self.height
 
     # update function is runned once per frame
     def update(self, delta):
@@ -35,19 +61,25 @@ class Obstacle:
 
 
 class Player:
-    width = 30
-    height = 60
+    width = 88
+    height = 94
     x = 70
     y = ground
     target_y = ground
+    isDucking = False
 
-    def __init__(self, img=RUNNING):
-        self.image = img
-        self.rect = pygame.Rect(self.x, self.y, img.get_width(), img.get_height())
+#    def __init__(self):
+#        self.rect = pygame.Rect(self.x, self.y, img.get_width(), img.get_height())
 
     def jump(self):
         if (self.y > ground - 10):
-            self.target_y = ground - 200
+            self.target_y = ground - 300
+
+    def duck(self):
+        if not self.isDucking:
+            self.y = ground + 47
+        else:
+            self.y = ground
 
     def update(self, delta):
         # Jumping draw
@@ -55,7 +87,7 @@ class Player:
             self.target_y = ground
 
         dir = 1 if self.target_y > self.y else (-1 if self.target_y < self.y else 0)
-        self.y += dir * 150 * delta / 0.28
+        self.y += dir * 225 * delta / 0.28
 
         if self.y > ground:
             self.y = ground
@@ -78,7 +110,7 @@ def eval_genomes(genomes, config):
     global obstacles, players, ge, nets
     # Script managed variables
     players = []
-    obstacles = [Obstacle()]
+    obstacles = [Obstacle(), Bird()]
     ge = []
     nets = []
 
@@ -117,8 +149,8 @@ def eval_genomes(genomes, config):
         # if gameover:
         #     if not scoreshown:
         #         print("Score: ", int(score))
-        #         scoreshown = True
-        #     continue
+        #         coreshown = True
+            # continue
 
         # Update all
         dt = clock.tick() / 1000.0
@@ -130,6 +162,7 @@ def eval_genomes(genomes, config):
             obstacle.update(dt)
 
         if len(players) == 0:
+            print("Score: ", int(score))
             break
 
         if obstacles:
@@ -138,7 +171,7 @@ def eval_genomes(genomes, config):
 
         # Check colliders
         for obstacle in obstacles:
-            obstacleRect = pygame.Rect(obstacle.x, ground - obstacle.height, obstacle.width, obstacle.height)
+            obstacleRect = pygame.Rect(obstacle.x, obstacle.y, obstacle.width, obstacle.height)
 
             if obstacle.x < nearestobstacle.x:
                 nearestobstacle = obstacle
@@ -148,37 +181,44 @@ def eval_genomes(genomes, config):
                 playerRect = pygame.Rect(player.x, player.y - player.height + 5, player.width, player.height)
                 if playerRect.colliderect(obstacleRect):
                     ge[i].fitness -= 1
-                    gameover = True
+                    # gameover = True
                     remove(i)
 
         for i, player in enumerate(players):
             output = nets[i].activate((playerRect.y,
-                                       distance((playerRect.x, playerRect.y),
-                                       nearestobstacleRect.midtop)))
-            print(distance((playerRect.x, playerRect.y), nearestobstacleRect.midtop))
+                                       distance((playerRect.x, playerRect.y), nearestobstacleRect.midtop),
+                                       nearestobstacleRect.x, nearestobstacleRect.w, nearestobstacleRect.h))
+            # print(distance((playerRect.x, playerRect.y), nearestobstacleRect.midtop))
             # if output[0] > 0.5 and playerRect.y == player.y:
             if output[0] > 0.5:
                 player.jump()
-
+            if output[1] > 0.5:
+                player.duck()
         # Generate new obstacles and remove old one
         delta += dt
-        if delta > 2:
-            delta -= 2
-            for i in range(randrange(0, 2)):
-                obstacles.append(Obstacle(randrange(720, 1400)))
+        if delta > 1:
+            delta -= 1
+            # for i in range(randrange(0, 1)):
         for obstacle in obstacles:
             if obstacle.x < -100:
                 obstacles.remove(obstacle)
+                rnd = randrange(0, 2)
+                if rnd is 0:
+                    obstacles.append(Obstacle(randrange(1080, 1700)))
+                else:
+                    obstacles.append(Bird(randrange(1080, 1700)))
 
         # Drawing
         screen.fill(color_bg)
         pygame.draw.line(screen, color_main, [0, ground - 10], [width, ground - 10], 1)
         for player in players:
-            pygame.draw.rect(screen, color_main,
-                             pygame.Rect(player.x, player.y - player.height + 5, player.width, player.height))
+            # pygame.draw.rect(screen, color_main,
+                            #  pygame.Rect(player.x, player.y - player.height + 5, player.width, player.height))
+            screen.blit(dinoImg, (player.x, player.y - player.height + 5))
         for obstacle in obstacles:
-            pygame.draw.rect(screen, color_main,
-                             pygame.Rect(obstacle.x, ground - obstacle.height, obstacle.width, obstacle.height))
+            screen.blit(obstacle.img, (obstacle.x, obstacle.y))
+            # pygame.draw.rect(screen, color_main,
+            #                  pygame.Rect(obstacle.x, ground - obstacle.height, obstacle.width, obstacle.height))
         pygame.display.flip()
 
 
