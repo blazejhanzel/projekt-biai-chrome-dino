@@ -8,15 +8,15 @@ pygame.init()
 
 
 # System variables
-width = 480
-height = 320
+width = 1080
+height = 720
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
 
 # Game variables
 color_main = (0, 0, 0)
 color_bg = (255, 255, 255)
-ground = 200
+ground = 400
 
 
 class Obstacle:
@@ -68,7 +68,7 @@ def remove(index):
 
 
 def eval_genomes(genomes, config):
-    print("New game")
+    print("Wszyscy zgineli, nowa gra")
     global obstacles, players, ge, nets
     # Script managed variables
     players = []
@@ -87,7 +87,6 @@ def eval_genomes(genomes, config):
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         nets.append(net)
         genome.fitness = 0
-        print("Utworzono dino")
 
     while True:
         # Handle events
@@ -135,7 +134,6 @@ def eval_genomes(genomes, config):
                     ge[i].fitness -= 1
                     gameover = True
                     remove(i)
-                    print("Hit")
 
         for i, player in enumerate(players):
             output = nets[i].activate((playerRect.y,
@@ -165,11 +163,6 @@ def eval_genomes(genomes, config):
 
 
 def run(config_file):
-    """
-    runs the NEAT algorithm to train a neural network to play dino game.
-    :param config_file: location of config file
-    :return: None
-    """
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          config_file)
