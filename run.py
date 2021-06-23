@@ -6,7 +6,6 @@ from random import randrange
 
 pygame.init()
 
-
 # System variables
 width = 1080
 height = 720
@@ -18,19 +17,22 @@ color_main = (0, 0, 0)
 color_bg = (255, 255, 255)
 ground = 400
 
+RUNNING = pygame.image.load(os.path.join("Assets/Dino", "DinoJump.png"))
+
 
 class Obstacle:
     width = 20
     height = 40
     x = 720
 
-    def __init__(self, x = 720):
+    def __init__(self, x=720):
         self.x = x
-    
+
     # update function is runned once per frame
     def update(self, delta):
         # Move object to left edge with speed in pixels per second
         self.x -= 400 * delta
+
 
 class Player:
     width = 30
@@ -39,9 +41,13 @@ class Player:
     y = ground
     target_y = ground
 
+    def __init__(self, img=RUNNING):
+        self.image = img
+        self.rect = pygame.Rect(self.x, self.y, img.get_width(), img.get_height())
+
     def jump(self):
         if (self.y > ground - 10):
-            self.target_y = ground - 150
+            self.target_y = ground - 200
 
     def update(self, delta):
         # Jumping draw
@@ -50,15 +56,15 @@ class Player:
 
         dir = 1 if self.target_y > self.y else (-1 if self.target_y < self.y else 0)
         self.y += dir * 150 * delta / 0.28
-        
+
         if self.y > ground:
             self.y = ground
 
 
 def distance(pos_a, pos_b):
-    dx = pos_a[0]-pos_b[0]
-    dy = pos_a[1]-pos_b[1]
-    return math.sqrt(dx**2+dy**2)
+    dx = pos_a[0] - pos_b[0]
+    dy = pos_a[1] - pos_b[1]
+    return math.sqrt(dx ** 2 + dy ** 2)
 
 
 def remove(index):
@@ -139,6 +145,7 @@ def eval_genomes(genomes, config):
             output = nets[i].activate((playerRect.y,
                                        distance((playerRect.x, playerRect.y),
                                                 obstacleRect.midtop)))
+            print(distance((playerRect.x, playerRect.y), obstacleRect.midtop))
             # if output[0] > 0.5 and playerRect.y == player.y:
             if output[0] > 0.5:
                 player.jump()
@@ -147,7 +154,7 @@ def eval_genomes(genomes, config):
         delta += dt
         if delta > 1:
             delta -= 1
-            for i in range(randrange(0,2)):
+            for i in range(randrange(0, 2)):
                 obstacles.append(Obstacle(randrange(720, 1400)))
         for obstacle in obstacles:
             if obstacle.x < -100:
@@ -156,33 +163,35 @@ def eval_genomes(genomes, config):
         # Drawing
         screen.fill(color_bg)
         pygame.draw.line(screen, color_main, [0, ground - 10], [width, ground - 10], 1)
-        pygame.draw.rect(screen, color_main, pygame.Rect(player.x, player.y - player.height + 5, player.width, player.height))
+        pygame.draw.rect(screen, color_main,
+                         pygame.Rect(player.x, player.y - player.height + 5, player.width, player.height))
         for obstacle in obstacles:
-            pygame.draw.rect(screen, color_main, pygame.Rect(obstacle.x, ground - obstacle.height, obstacle.width, obstacle.height))
+            pygame.draw.rect(screen, color_main,
+                             pygame.Rect(obstacle.x, ground - obstacle.height, obstacle.width, obstacle.height))
         pygame.display.flip()
 
 
 def run(config_file):
+    global p
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                         config_file)
+                                neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                config_file)
 
     # Create the population, which is the top-level object for a NEAT run.
     p = neat.Population(config)
 
     # Add a stdout reporter to show progress in the terminal.
-    #p.add_reporter(neat.StdOutReporter(True))
-    #stats = neat.StatisticsReporter()
-    #p.add_reporter(stats)
-    #p.add_reporter(neat.Checkpointer(5))
+    # p.add_reporter(neat.StdOutReporter(True))
+    # stats = neat.StatisticsReporter()
+    # p.add_reporter(stats)
+    # p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 50 generations.
     p.run(eval_genomes, 50)
-    #loop()
+    # loop()
 
     # show final stats
-    #print('\nBest genome:\n{!s}'.format(winner))
-
+    # print('\nBest genome:\n{!s}'.format(winner))
 
 
 if __name__ == '__main__':
