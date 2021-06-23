@@ -148,7 +148,7 @@ def eval_genomes(genomes, config):
         if delta > 1:
             delta -= 1
             for i in range(randrange(0,2)):
-                obstacles.append(Obstacle(randrange(720, 1080)))
+                obstacles.append(Obstacle(randrange(720, 1400)))
         for obstacle in obstacles:
             if obstacle.x < -100:
                 obstacles.remove(obstacle)
