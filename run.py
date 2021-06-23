@@ -145,15 +145,15 @@ def eval_genomes(genomes, config):
             output = nets[i].activate((playerRect.y,
                                        distance((playerRect.x, playerRect.y),
                                                 obstacleRect.midtop)))
-            print(distance((playerRect.x, playerRect.y), obstacleRect.midtop))
+            # print(distance((playerRect.x, playerRect.y), obstacleRect.midtop))
             # if output[0] > 0.5 and playerRect.y == player.y:
             if output[0] > 0.5:
                 player.jump()
 
         # Generate new obstacles and remove old one
         delta += dt
-        if delta > 1:
-            delta -= 1
+        if delta > 2:
+            delta -= 2
             for i in range(randrange(0, 2)):
                 obstacles.append(Obstacle(randrange(720, 1400)))
         for obstacle in obstacles:
