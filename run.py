@@ -27,14 +27,14 @@ class Bird:
     width = 40
     height = 20
     x = 1080
-    y = ground - height - randrange(50, 100)
+    y = ground - height
     img = birdImg
 
     def __init__(self, x=1080):
         self.x = x
         self.width = self.img.get_rect().w
         self.height = self.img.get_rect().h
-        self.y = ground - self.height - randrange(50, 100)
+        self.y = ground - self.height - randrange(50, 150)
 
     def update(self, delta):
         self.x -= 400 * delta
@@ -66,25 +66,32 @@ class Player:
     x = 70
     y = ground
     target_y = ground
+    isJumping = False
     isDucking = False
 
 #    def __init__(self):
 #        self.rect = pygame.Rect(self.x, self.y, img.get_width(), img.get_height())
 
     def jump(self):
-        if (self.y > ground - 10):
+        if self.y > ground - 10 and not self.isDucking:
             self.target_y = ground - 300
+            self.isJumping = True
 
-    def duck(self):
-        if not self.isDucking:
+    def duckOn(self):
+        if not self.isJumping:
             self.y = ground + 47
-        else:
+            self.isDucking = True
+    
+    def duckOff(self):
+        if self.isDucking:
             self.y = ground
+            self.isDucking = False
 
     def update(self, delta):
         # Jumping draw
         if self.target_y < ground and self.y <= self.target_y:
             self.target_y = ground
+            self.isJumping = False
 
         dir = 1 if self.target_y > self.y else (-1 if self.target_y < self.y else 0)
         self.y += dir * 225 * delta / 0.28
@@ -110,7 +117,7 @@ def eval_genomes(genomes, config):
     global obstacles, players, ge, nets
     # Script managed variables
     players = []
-    obstacles = [Obstacle(), Bird()]
+    obstacles = [Obstacle()]
     ge = []
     nets = []
 
@@ -134,23 +141,6 @@ def eval_genomes(genomes, config):
                 if not scoreshown:
                     print("Score: ", int(score))
                 sys.exit(0)
-            # elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
-            #     if gameover:
-            #         player = Player()
-            #         obstacles = [Obstacle()]
-            #         score = 0.0
-            #         delta = 0.0
-            #         gameover = False
-            #         scoreshown = False
-            # else:
-            #     player.jump()
-
-        # Gameover behaviour
-        # if gameover:
-        #     if not scoreshown:
-        #         print("Score: ", int(score))
-        #         coreshown = True
-            # continue
 
         # Update all
         dt = clock.tick() / 1000.0
@@ -185,15 +175,18 @@ def eval_genomes(genomes, config):
                     remove(i)
 
         for i, player in enumerate(players):
-            output = nets[i].activate((playerRect.y,
-                                       distance((playerRect.x, playerRect.y), nearestobstacleRect.midtop),
-                                       nearestobstacleRect.x, nearestobstacleRect.w, nearestobstacleRect.h))
+            output = nets[i].activate((player.y,
+                                       distance((player.x, player.y), nearestobstacleRect.midtop),
+                                       nearestobstacleRect.x, nearestobstacleRect.y, nearestobstacleRect.w, nearestobstacleRect.h))
             # print(distance((playerRect.x, playerRect.y), nearestobstacleRect.midtop))
             # if output[0] > 0.5 and playerRect.y == player.y:
             if output[0] > 0.5:
                 player.jump()
             if output[1] > 0.5:
-                player.duck()
+                player.duckOn()
+            if output[2] > 0.5:
+                player.duckOff()
+
         # Generate new obstacles and remove old one
         delta += dt
         if delta > 1:
