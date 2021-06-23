@@ -84,6 +84,7 @@ def eval_genomes(genomes, config):
 
     score = 0.0
     delta = 0.0
+    nearestobstacle = Obstacle(2000)
     gameover = False
     scoreshown = False
 
@@ -131,9 +132,18 @@ def eval_genomes(genomes, config):
         if len(players) == 0:
             break
 
+        if obstacles:
+            nearestobstacle = obstacles[0]
+            nearestobstacleRect = pygame.Rect(obstacles[0].x, ground - obstacles[0].height, obstacles[0].width, obstacles[0].height)
+
         # Check colliders
         for obstacle in obstacles:
             obstacleRect = pygame.Rect(obstacle.x, ground - obstacle.height, obstacle.width, obstacle.height)
+
+            if obstacle.x < nearestobstacle.x:
+                nearestobstacle = obstacle
+                nearestobstacleRect = obstacleRect
+
             for i, player in enumerate(players):
                 playerRect = pygame.Rect(player.x, player.y - player.height + 5, player.width, player.height)
                 if playerRect.colliderect(obstacleRect):
@@ -144,8 +154,8 @@ def eval_genomes(genomes, config):
         for i, player in enumerate(players):
             output = nets[i].activate((playerRect.y,
                                        distance((playerRect.x, playerRect.y),
-                                                obstacleRect.midtop)))
-            # print(distance((playerRect.x, playerRect.y), obstacleRect.midtop))
+                                       nearestobstacleRect.midtop)))
+            print(distance((playerRect.x, playerRect.y), nearestobstacleRect.midtop))
             # if output[0] > 0.5 and playerRect.y == player.y:
             if output[0] > 0.5:
                 player.jump()
