@@ -221,21 +221,13 @@ def run(config_file):
                                 neat.DefaultSpeciesSet, neat.DefaultStagnation,
                                 config_file)
 
-    # Create the population, which is the top-level object for a NEAT run.
     p = neat.Population(config)
+    p.add_reporter(neat.StdOutReporter(True))
+    stats = neat.StatisticsReporter()
+    p.add_reporter(stats)
+    winner = p.run(eval_genomes, 50)
 
-    # Add a stdout reporter to show progress in the terminal.
-    # p.add_reporter(neat.StdOutReporter(True))
-    # stats = neat.StatisticsReporter()
-    # p.add_reporter(stats)
-    # p.add_reporter(neat.Checkpointer(5))
-
-    # Run for up to 50 generations.
-    p.run(eval_genomes, 50)
-    # loop()
-
-    # show final stats
-    # print('\nBest genome:\n{!s}'.format(winner))
+    print('\nBest genome:\n{!s}'.format(winner))
 
 
 if __name__ == '__main__':
